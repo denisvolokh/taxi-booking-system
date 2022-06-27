@@ -15,7 +15,7 @@ pytest
 ## Run server
 
 ```shell
-uvicorn main:app --reload --port 8080
+uvicorn app.main:app --reload --port 8080
 ```
 
 ## Run server in Docker container

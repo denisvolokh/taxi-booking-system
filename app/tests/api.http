@@ -1,0 +1,38 @@
+GET http://0.0.0.0:8080/api/
+
+### Reset system
+PUT http://0.0.0.0:8080/api/reset
+
+
+### List cars
+GET http://0.0.0.0:8080/api/cars
+
+
+### List booked cars
+GET http://0.0.0.0:8080/api/cars?is_booked=true
+
+
+### Get car
+GET http://0.0.0.0:8080/api/cars/1
+
+
+
+### Tick
+POST http://0.0.0.0:8080/api/tick
+
+
+### Book
+POST http://0.0.0.0:8080/api/book
+Content-Type: application/json
+Accept: application/json
+
+{
+    "source" : {
+        "x": 0, 
+        "y": 0
+    },
+    "destination" : {
+        "x": 1, 
+        "y": 1
+    }
+}

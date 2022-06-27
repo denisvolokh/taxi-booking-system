@@ -26,5 +26,3 @@ RUN apk add --update --no-cache bash\
 RUN pipenv install --system --deploy
 
 COPY . /code
-
-# CMD ["uvicorn", "socketapp:app", "--host", "0.0.0.0", "--port", "8000"]

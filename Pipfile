@@ -7,9 +7,15 @@ name = "pypi"
 fastapi = "*"
 pydantic = "*"
 uvicorn = "*"
+requests = "*"
 
 [dev-packages]
 pytest = "*"
+isort = "*"
+black = "*"
+flake8 = "*"
+mypy = "*"
+pre-commit = "*"
 
 [requires]
 python_version = "3.9"
