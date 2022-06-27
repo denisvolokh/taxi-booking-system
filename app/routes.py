@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Response, status
+from fastapi import APIRouter, Query, Request, Response, status
 
 from app.models import (
     BookRequest,
@@ -13,7 +13,13 @@ router = APIRouter()
 
 
 @router.get("/cars", response_model=CarsResponse)
-async def list_cars(request: Request, is_booked: bool = False):
+async def list_cars(
+    request: Request,
+    is_booked: bool = Query(
+        False, description="Filter parameter to show only booked or free cars"
+    ),
+):
+    """Method to list cars in the system"""
     cars = []
     for car in request.app.state.cars:
         if car.is_booked == is_booked:
@@ -25,6 +31,7 @@ async def list_cars(request: Request, is_booked: bool = False):
     "/cars/{car_id}", response_model=CarResponse, responses={204: {"model": ""}}
 )
 async def get_car(car_id: int, request: Request):
+    """Method to retrieve a car by id"""
     car = request.app.state.get_car(car_id)
     if not car:
         return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -36,18 +43,10 @@ async def get_car(car_id: int, request: Request):
     "/book",
     status_code=status.HTTP_201_CREATED,
     response_model=BookResponse,
-    responses={204: {"model": ""}},
+    responses={204: {"model": "", "description": "No avaialable cars for booking"}},
 )
 async def create_book(book_request: BookRequest, request: Request):
-    """POST method to book car
-
-    Args:
-        book_request (BookRequest): POST payload that contains pick up and destination locations
-        request (Request): POST request object
-
-    Returns:
-        Book: Book response
-    """
+    """Method to create new booking"""
     book = request.app.state.book_car(
         pickup=book_request.source, destination=book_request.destination
     )
@@ -59,14 +58,7 @@ async def create_book(book_request: BookRequest, request: Request):
 
 @router.post("/tick", response_model=TickResponse)
 async def tick(request: Request):
-    """_summary_
-
-    Args:
-        request (Request): _description_
-
-    Returns:
-        _type_: _description_
-    """
+    """Method to increment system time"""
     request.app.state.increment_time()
 
     return request.app.state
@@ -74,12 +66,7 @@ async def tick(request: Request):
 
 @router.put("/reset", response_model=ResetResponse)
 async def reset(request: Request):
-    """PUT method to reset state of the system
-
-    Args:
-        request (Request): Request object
-
-    """
+    """Method to reset system's state"""
     request.app.state.reset()
 
     return request.app.state

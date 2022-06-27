@@ -1,6 +1,6 @@
 from typing import Any, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class EmptyResponse(BaseModel):
@@ -43,7 +43,8 @@ class Book(BookBase):
 
 
 class BookRequest(BookBase):
-    pass
+    source: Location = Field(description="Source location")
+    destination: Location = Field(description="Destination location")
 
 
 class BookResponse(BaseModel):
