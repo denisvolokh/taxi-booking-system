@@ -1,3 +1,5 @@
+import pytest
+
 from app.models import Book, Car, Location, State
 
 
@@ -17,8 +19,21 @@ def test_initial_state():
     assert state.get_car(1).is_booked is False
 
 
-def test_reset_state():
-    pass
+def test_reset_all_cars_should_be_back_and_not_booked():
+    """Test reset all cars should be back and not booked"""
+
+    state = State(
+        cars=[
+            Car(car_id=1, location=Location(x=-1, y=-1), is_booked=True),
+            Car(car_id=2, location=Location(x=1, y=1), is_booked=True),
+            Car(car_id=3, location=Location(x=2, y=2), is_booked=True),
+        ]
+    )
+
+    state.reset()
+    for car in state.cars:
+        assert car.is_booked is False
+        assert car.location == Location(x=0, y=0)
 
 
 def test_increment_time():
@@ -100,37 +115,72 @@ def test_find_nearest_available_car_when_no_available_cars():
     assert nearest_car is None
 
 
-def test_find_nearest_available_car():
+@pytest.mark.parametrize(
+    "state, pickup_location, expected_car_id",
+    [
+        [
+            State(
+                cars=[
+                    Car(car_id=1, location=Location(x=-1, y=-1)),
+                    Car(car_id=2, location=Location(x=1, y=1)),
+                    Car(car_id=3, location=Location(x=2, y=2)),
+                ]
+            ),
+            Location(x=0, y=0),
+            1,
+        ],
+        [
+            State(
+                cars=[
+                    Car(car_id=1, location=Location(x=-1, y=-1)),
+                    Car(car_id=2, location=Location(x=1, y=1)),
+                    Car(car_id=3, location=Location(x=2, y=2)),
+                ]
+            ),
+            Location(x=3, y=3),
+            3,
+        ],
+    ],
+)
+def test_find_nearest_available_car(state, pickup_location, expected_car_id):
     """Test find nearest available car"""
-
-    state = State(
-        cars=[
-            Car(car_id=1, location=Location(x=-1, y=-1)),
-            Car(car_id=2, location=Location(x=1, y=1)),
-            Car(car_id=3, location=Location(x=2, y=2)),
-        ]
-    )
-
-    nearest_car = state.find_nearest_available_car(pickup=Location(x=0, y=0))
-    assert nearest_car.car_id == 1
-
-    nearest_car = state.find_nearest_available_car(pickup=Location(x=3, y=3))
-    assert nearest_car.car_id == 3
+    nearest_car = state.find_nearest_available_car(pickup=pickup_location)
+    assert nearest_car.car_id == expected_car_id
 
 
-def test_find_nearest_available_car_with_smallest_id():
+@pytest.mark.parametrize(
+    "state, pickup_location, expected_car_id",
+    [
+        [
+            State(
+                cars=[
+                    Car(car_id=1, location=Location(x=-1, y=-1)),
+                    Car(car_id=2, location=Location(x=1, y=1)),
+                    Car(car_id=3, location=Location(x=2, y=2)),
+                ]
+            ),
+            Location(x=1, y=1),
+            2,
+        ],
+        [
+            State(
+                cars=[
+                    Car(car_id=1, location=Location(x=0, y=0)),
+                    Car(car_id=2, location=Location(x=0, y=0)),
+                    Car(car_id=3, location=Location(x=0, y=0)),
+                ]
+            ),
+            Location(x=3, y=3),
+            1,
+        ],
+    ],
+)
+def test_find_nearest_available_car_with_smallest_id(
+    state, pickup_location, expected_car_id
+):
     """Test find nearest available car with smallest id"""
-
-    state = State(
-        cars=[
-            Car(car_id=1, location=Location(x=-1, y=-1)),
-            Car(car_id=2, location=Location(x=1, y=1)),
-            Car(car_id=3, location=Location(x=2, y=2)),
-        ]
-    )
-
-    nearest_car = state.find_nearest_available_car(pickup=Location(x=1, y=1))
-    assert nearest_car.car_id == 2
+    nearest_car = state.find_nearest_available_car(pickup=pickup_location)
+    assert nearest_car.car_id == expected_car_id
 
 
 def test_find_nearest_available_car_when_all_cars_booked():
@@ -148,15 +198,15 @@ def test_find_nearest_available_car_when_all_cars_booked():
     assert nearest_car is None
 
 
-def test_calc_path():
-    """Test calculation of the path (Location points between two locations points)"""
-    cases = [
-        (
+@pytest.mark.parametrize(
+    "start, end, expected_path",
+    [
+        [
             Location(x=0, y=0),
             Location(x=1, y=1),
             [Location(x=0, y=0), Location(x=0, y=1), Location(x=1, y=1)],
-        ),
-        (
+        ],
+        [
             Location(x=5, y=5),
             Location(x=1, y=1),
             [
@@ -170,8 +220,8 @@ def test_calc_path():
                 Location(x=2, y=1),
                 Location(x=1, y=1),
             ],
-        ),
-        (
+        ],
+        [
             Location(x=-3, y=-3),
             Location(x=1, y=1),
             [
@@ -185,27 +235,40 @@ def test_calc_path():
                 Location(x=0, y=1),
                 Location(x=1, y=1),
             ],
-        ),
-    ]
-
-    for start, end, expected in cases:
-        path = State.calc_path(start, end)
-        assert path == expected
-
-
-def test_calc_path_car_pickup_destination():
+        ],
+    ],
+)
+def test_calc_path(start, end, expected_path):
     """Test calculation of the path (Location points between two locations points)"""
+    assert State.calc_path(start, end) == expected_path
 
-    path = State.calc_car_path(
-        car_location=Location(x=0, y=0),
-        pickup=Location(x=1, y=1),
-        destination=Location(x=2, y=2),
+
+@pytest.mark.parametrize(
+    "car_location, pickup_location, destination_location, expected_path",
+    [
+        [
+            Location(x=0, y=0),
+            Location(x=1, y=1),
+            Location(x=2, y=2),
+            [
+                Location(x=0, y=0),
+                Location(x=0, y=1),
+                Location(x=1, y=1),
+                Location(x=1, y=2),
+                Location(x=2, y=2),
+            ],
+        ]
+    ],
+)
+def test_calc_path_car_pickup_destination(
+    car_location, pickup_location, destination_location, expected_path
+):
+    """Test calculation of the path (Location points between two locations points)"""
+    assert (
+        State.calc_car_path(
+            car_location=car_location,
+            pickup=pickup_location,
+            destination=destination_location,
+        )
+        == expected_path
     )
-
-    assert path == [
-        Location(x=0, y=0),
-        Location(x=0, y=1),
-        Location(x=1, y=1),
-        Location(x=1, y=2),
-        Location(x=2, y=2),
-    ]
